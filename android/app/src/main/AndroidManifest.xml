@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">    <uses-permission android:name="android.permission.INTERNET"/>
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <application
@@ -29,10 +30,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.razorpay.CheckoutActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            <activity
+                <activity
+                    android:name="com.razorpay.CheckoutActivity"
+                    android:exported="true"
+                    tools:node="replace"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <data
