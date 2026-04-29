@@ -53,6 +53,26 @@ class RazorpayServiceImpl implements RazorpayService {
         'contact': contact,
       },
       'theme': {'color': '#2E3A8C'},
+      'method': {
+        'upi': true,
+        'card': true,
+        'netbanking': true,
+        'wallet': true,
+      },
+      'config': {
+        'display': {
+          'blocks': {
+            'upi': {
+              'name': 'Pay via UPI',
+              'instruments': [
+                {'method': 'upi'}
+              ]
+            }
+          },
+          'sequence': ['block.upi'],
+          'preferences': {'show_default_blocks': true}
+        }
+      },
       // ignore: undefined_function
       'handler': js.allowInterop((response) {
         // Safe access to JS properties using js_util

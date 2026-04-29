@@ -1,38 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
-import 'otp_verification_screen.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({super.key});
+class OtpVerificationScreen extends StatefulWidget {
+  final String phone;
+
+  const OtpVerificationScreen({super.key, required this.phone});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _phoneController = TextEditingController();
+class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
+  final _otpController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
-  String formatPhone(String phone) {
-    phone = phone.trim().replaceAll(' ', '');
-    if (!phone.startsWith('+')) {
-      phone = '+91$phone'; // Add India country code
-    }
-    return phone;
-  }
-
-  void _handleReset() async {
-    final phoneText = _phoneController.text.trim();
-    if (phoneText.isEmpty) {
+  void _verifyOtp() async {
+    final otpText = _otpController.text.trim();
+    if (otpText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a phone number.')),
+        const SnackBar(content: Text('Please enter the OTP.')),
       );
       return;
     }
@@ -40,28 +33,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final formattedPhone = formatPhone(phoneText);
-      await Supabase.instance.client.auth.signInWithOtp(
-        phone: formattedPhone,
+      final response = await Supabase.instance.client.auth.verifyOTP(
+        type: OtpType.sms,
+        token: otpText,
+        phone: widget.phone,
       );
 
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP sent successfully!')),
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OtpVerificationScreen(phone: formattedPhone),
-          ),
-        );
+        if (response.session != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Phone verified successfully!')),
+          );
+          // Navigate to home or let the auth state change handle it
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid OTP. Please try again.')),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send OTP: $e')),
+          SnackBar(content: Text('Verification failed: $e')),
         );
       }
     }
@@ -71,7 +67,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Forgot Password'),
+        title: const Text('Verify OTP'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -80,10 +76,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 24),
-              const Icon(Icons.lock_reset, size: 80, color: AppTheme.primaryColor),
+              const Icon(Icons.message_outlined, size: 80, color: AppTheme.primaryColor),
               const SizedBox(height: 24),
               Text(
-                'Reset Password',
+                'Enter OTP',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   color: AppTheme.primaryColor,
                   fontSize: 24,
@@ -92,30 +88,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Enter your phone number and we will send you an OTP to reset your password.',
+                'An OTP has been sent to ${widget.phone}.',
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               
               TextField(
-                controller: _phoneController,
+                controller: _otpController,
                 decoration: const InputDecoration(
-                  hintText: 'Phone Number',
-                  prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.primaryColor),
+                  hintText: 'OTP Code',
+                  prefixIcon: Icon(Icons.password_outlined, color: AppTheme.primaryColor),
                 ),
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
               ),
               const SizedBox(height: 32),
               
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleReset,
+                onPressed: _isLoading ? null : _verifyOtp,
                 child: _isLoading 
                   ? const SizedBox(
                       width: 24, height: 24, 
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                     )
-                  : const Text('Send Reset OTP'),
+                  : const Text('Verify'),
               ),
             ],
           ),

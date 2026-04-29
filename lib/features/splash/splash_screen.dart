@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../auth/data/auth_repository.dart';
 import '../../core/services/payment_status_service.dart';
 import '../../core/widgets/expiry_dialog.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -48,7 +48,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       final auth = ref.read(authRepositoryProvider);
       final payment = ref.read(paymentStatusServiceProvider);
       
-      final currentUser = auth.currentUser;
+      final currentUser = Supabase.instance.client.auth.currentSession?.user;
       
       if (currentUser == null) {
         context.go('/login');

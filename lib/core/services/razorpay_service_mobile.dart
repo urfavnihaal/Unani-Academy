@@ -64,7 +64,27 @@ class RazorpayServiceImpl implements RazorpayService {
       'order_id': orderId,
       'description': description,
       'prefill': {'contact': contact, 'email': email},
-      'theme': {'color': '#2E3A8C'}
+      'theme': {'color': '#2E3A8C'},
+      'method': {
+        'upi': true,
+        'card': true,
+        'netbanking': true,
+        'wallet': true,
+      },
+      'config': {
+        'display': {
+          'blocks': {
+            'upi': {
+              'name': 'Pay via UPI',
+              'instruments': [
+                {'method': 'upi'}
+              ]
+            }
+          },
+          'sequence': ['block.upi'],
+          'preferences': {'show_default_blocks': true}
+        }
+      }
     };
 
     debugPrint('Opening Razorpay Mobile Checkout: $options');

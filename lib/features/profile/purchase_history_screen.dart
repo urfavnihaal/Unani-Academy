@@ -48,7 +48,7 @@ class PurchaseHistoryScreen extends ConsumerWidget {
             itemCount: purchases.length,
             itemBuilder: (context, index) {
               final purchase = purchases[index];
-              final createdAtStr = purchase['created_at'] as String?;
+              final createdAtStr = purchase['purchased_at'] as String? ?? purchase['created_at'] as String?;
               final courseData = purchase['courses'] as Map<String, dynamic>?;
 
               final purchaseDate = createdAtStr != null ? DateTime.tryParse(createdAtStr) : null;
@@ -79,7 +79,7 @@ class PurchaseHistoryScreen extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              purchase['display_name'] ?? courseData?['title'] ?? 'Purchase',
+                              purchase['course_name'] ?? purchase['display_name'] ?? courseData?['title'] ?? 'Purchase',
                               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
