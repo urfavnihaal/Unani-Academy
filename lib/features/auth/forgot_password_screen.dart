@@ -11,28 +11,20 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
-  String formatPhone(String phone) {
-    phone = phone.trim().replaceAll(' ', '');
-    if (!phone.startsWith('+')) {
-      phone = '+91$phone'; // Add India country code
-    }
-    return phone;
-  }
-
   void _handleReset() async {
-    final phoneText = _phoneController.text.trim();
-    if (phoneText.isEmpty) {
+    final emailText = _emailController.text.trim();
+    if (emailText.isEmpty || !emailText.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a phone number.')),
+        const SnackBar(content: Text('Please enter a valid email address.')),
       );
       return;
     }
@@ -40,20 +32,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final formattedPhone = formatPhone(phoneText);
-      await Supabase.instance.client.auth.signInWithOtp(
-        phone: formattedPhone,
-      );
+      await Supabase.instance.client.auth.resetPasswordForEmail(emailText);
 
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP sent successfully!')),
+          const SnackBar(content: Text('OTP sent to your email!')),
         );
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OtpVerificationScreen(phone: formattedPhone),
+            builder: (_) => OtpVerificationScreen(email: emailText),
           ),
         );
       }
@@ -92,19 +81,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Enter your phone number and we will send you an OTP to reset your password.',
+                'Enter your email address and we will send you an OTP to reset your password.',
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               
               TextField(
-                controller: _phoneController,
+                controller: _emailController,
                 decoration: const InputDecoration(
-                  hintText: 'Phone Number',
-                  prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.primaryColor),
+                  hintText: 'Email Address',
+                  prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryColor),
                 ),
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 32),
               
@@ -115,7 +104,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       width: 24, height: 24, 
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                     )
-                  : const Text('Send Reset OTP'),
+                  : const Text('Get OTP'),
               ),
             ],
           ),

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 
-class OtpVerificationScreen extends StatefulWidget {
-  final String phone;
+import 'create_new_password_screen.dart';
 
-  const OtpVerificationScreen({super.key, required this.phone});
+class OtpVerificationScreen extends StatefulWidget {
+  final String email;
+
+  const OtpVerificationScreen({super.key, required this.email});
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -34,19 +36,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     
     try {
       final response = await Supabase.instance.client.auth.verifyOTP(
-        type: OtpType.sms,
+        type: OtpType.recovery,
         token: otpText,
-        phone: widget.phone,
+        email: widget.email,
       );
 
       if (mounted) {
         setState(() => _isLoading = false);
         if (response.session != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Phone verified successfully!')),
+            const SnackBar(content: Text('Email verified successfully!')),
           );
-          // Navigate to home or let the auth state change handle it
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateNewPasswordScreen()),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Invalid OTP. Please try again.')),
@@ -88,7 +92,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'An OTP has been sent to ${widget.phone}.',
+                'An OTP has been sent to ${widget.email}.',
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),

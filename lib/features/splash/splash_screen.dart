@@ -42,47 +42,64 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     _controller.forward();
 
     // Handle navigation after splash animation
-    Future.delayed(const Duration(seconds: 4), () async {
-      if (!mounted) return;
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        _checkSessionAndNavigate();
+      }
+    });
 
-      final auth = ref.read(authRepositoryProvider);
-      final payment = ref.read(paymentStatusServiceProvider);
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (!mounted) return;
+      final AuthChangeEvent event = data.event;
+      if (event == AuthChangeEvent.signedIn) {
+        // Delay slightly to avoid router conflicts during build
+        Future.microtask(() {
+          if (mounted) _checkSessionAndNavigate();
+        });
+      } else if (event == AuthChangeEvent.signedOut) {
+        Future.microtask(() {
+          if (mounted) context.go('/login');
+        });
+      }
+    });
+  }
+
+  Future<void> _checkSessionAndNavigate() async {
+    final payment = ref.read(paymentStatusServiceProvider);
+    final currentUser = Supabase.instance.client.auth.currentSession?.user;
+    
+    if (currentUser == null) {
+      context.go('/login');
+    } else {
+      // Check if plan was active but now expired
+      final prefs = await payment.getPurchaseDetails();
+      final isPurchased = prefs['is_purchased'] ?? false;
       
-      final currentUser = Supabase.instance.client.auth.currentSession?.user;
-      
-      if (currentUser == null) {
-        context.go('/login');
-      } else {
-        // Check if plan was active but now expired
-        final prefs = await payment.getPurchaseDetails();
-        final isPurchased = prefs['is_purchased'] ?? false;
-        
-        if (isPurchased) {
-          final expiryStr = prefs['expiry_date'];
-          if (expiryStr != null) {
-            final expiryDate = DateTime.parse(expiryStr);
-            if (DateTime.now().isAfter(expiryDate)) {
-              // Plan expired!
+      if (isPurchased) {
+        final expiryStr = prefs['expiry_date'];
+        if (expiryStr != null) {
+          final expiryDate = DateTime.parse(expiryStr);
+          if (DateTime.now().isAfter(expiryDate)) {
+            // Plan expired!
+            if (mounted) {
+              // We still go to home, but show the dialog immediately
+              context.go('/');
+              Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
-                // We still go to home, but show the dialog immediately
-                context.go('/');
-                Future.delayed(const Duration(milliseconds: 500), () {
-                if (mounted) {
-                   showExpiryDialog(context, ref);
-                }
-                });
-                return;
+                 showExpiryDialog(context, ref);
               }
+              });
+              return;
             }
           }
         }
-        
-        // Either not purchased, or still active
-        if (mounted) {
-          context.go('/');
-        }
       }
-    });
+      
+      // Either not purchased, or still active
+      if (mounted) {
+        context.go('/');
+      }
+    }
   }
 
   @override

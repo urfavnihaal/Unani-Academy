@@ -13,6 +13,7 @@ void main() async {
   await Supabase.initialize(
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
+    authFlowType: AuthFlowType.pkce,
   );
 
   runApp(
