@@ -105,7 +105,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   prefixIcon: Icon(Icons.password_outlined, color: AppTheme.primaryColor),
                 ),
                 keyboardType: TextInputType.number,
-                maxLength: 6,
+                maxLength: 8,
               ),
               const SizedBox(height: 32),
               

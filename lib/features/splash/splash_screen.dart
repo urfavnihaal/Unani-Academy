@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../auth/data/auth_repository.dart';
 import '../../core/services/payment_status_service.dart';
 import '../../core/widgets/expiry_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -83,7 +82,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
             // Plan expired!
             if (mounted) {
               // We still go to home, but show the dialog immediately
-              context.go('/');
+              context.go('/home');
               Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
                  showExpiryDialog(context, ref);
@@ -97,7 +96,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       
       // Either not purchased, or still active
       if (mounted) {
-        context.go('/');
+        context.go('/home');
       }
     }
   }
