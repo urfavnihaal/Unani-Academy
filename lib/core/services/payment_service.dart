@@ -110,18 +110,19 @@ class PaymentService {
           'card': true,
           'netbanking': true,
           'wallet': true,
+          'paylater': true,
         },
         'config': {
           'display': {
             'blocks': {
-              'upi': {
+              'utib': {
                 'name': 'Pay via UPI',
                 'instruments': [
                   {'method': 'upi'}
                 ]
               }
             },
-            'sequence': ['block.upi'],
+            'sequence': ['block.utib', 'block.other'],
             'preferences': {'show_default_blocks': true}
           }
         },
@@ -146,11 +147,12 @@ class PaymentService {
       if (user != null) {
         await Supabase.instance.client.from('purchases').insert({
           'user_id': user.id,
-          'payment_id': response.paymentId,
-          'order_id': response.orderId,
           'course_name': _currentCourseName ?? 'Unknown Course',
           'amount': _currentAmount ?? 0,
+          'payment_id': response.paymentId ?? '',
           'purchased_at': DateTime.now().toIso8601String(),
+          'valid_until': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+          'status': 'active',
         });
       }
     } catch (e) {

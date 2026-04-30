@@ -7,10 +7,10 @@ import '../../core/widgets/premium_image.dart';
 import 'data/course_repository.dart';
 import 'data/course_model.dart';
 import '../../core/services/payment_status_service.dart';
-import '../../core/widgets/expiry_dialog.dart';
 import '../auth/data/auth_repository.dart';
 import '../../core/services/razorpay_service.dart';
 import '../../core/providers/supabase_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CoursesScreen extends ConsumerStatefulWidget {
   const CoursesScreen({super.key});
@@ -209,32 +209,68 @@ class _PremiumSubjectCardState extends State<_PremiumSubjectCard> with SingleTic
   }
 
   void _onTap(WidgetRef ref) async {
-    final subjectName = widget.course.subject ?? widget.course.title;
+    if (_isUpdating) return;
     
-    // Check for plan expiry
-    final payment = ref.read(paymentStatusServiceProvider);
-    final isPlanActive = await payment.isPlanActive();
-    final prefs = await payment.getPurchaseDetails();
-    final wasPurchased = prefs['is_purchased'] ?? false;
-
-    if (wasPurchased && !isPlanActive) {
-      if (mounted) {
-        showExpiryDialog(context, ref);
-      }
+    final subjectName = widget.course.subject ?? widget.course.title;
+    final user = Supabase.instance.client.auth.currentUser;
+    
+    if (user == null) {
+      if (mounted) context.push('/login');
       return;
     }
 
-    if (widget.isUnlocked) {
-      if (mounted) {
-        context.push(
-          '/subject_materials',
-          extra: {'year': widget.course.year, 'subject': subjectName},
-        );
+    setState(() => _isUpdating = true);
+
+    try {
+      // 1. Check purchases table for active subscription
+      final data = await Supabase.instance.client
+          .from('purchases')
+          .select()
+          .eq('user_id', user.id)
+          .eq('course_name', subjectName)
+          .order('purchased_at', ascending: false)
+          .limit(1);
+
+      if (data.isNotEmpty) {
+        final purchase = data.first;
+        final validUntilStr = purchase['valid_until'] as String?;
+        final status = purchase['status'] as String? ?? 'active';
+        
+        final validUntil = validUntilStr != null ? DateTime.tryParse(validUntilStr) : null;
+        final isActive = validUntil != null && DateTime.now().isBefore(validUntil) && status == 'active';
+
+        if (isActive) {
+          // Valid active purchase exists
+          setState(() => _isUpdating = false);
+          if (mounted) {
+            context.push(
+              '/subject_materials',
+              extra: {'year': widget.course.year, 'subject': subjectName},
+            );
+          }
+          return;
+        } else {
+          // Purchase exists but is expired
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Subscription Expired. Please repurchase to access.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
       }
-    } else {
-      if (_isUpdating) return;
-      
-      final profile = ref.read(userProfileProvider).value;
+    } catch (e) {
+      debugPrint('Error validating subscription: $e');
+    }
+
+    // No valid purchase found or expired, proceed to payment
+    _initiatePayment(ref, subjectName);
+  }
+
+  void _initiatePayment(WidgetRef ref, String subjectName) async {
+    final profile = ref.read(userProfileProvider).value;
 
       final razorpay = getRazorpayService();
       razorpay.onSuccess = (paymentId, orderId) async {
@@ -323,7 +359,6 @@ class _PremiumSubjectCardState extends State<_PremiumSubjectCard> with SingleTic
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Checkout Error: $e')));
         }
       }
-    }
   }
 
   @override
