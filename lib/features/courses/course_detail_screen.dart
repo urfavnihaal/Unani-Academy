@@ -110,7 +110,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
             ref.invalidate(unlockedSubjectsProvider);
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$subjectName Unlocked!'), backgroundColor: Colors.green),
+                SnackBar(content: Text('Payment successful! $subjectName is now unlocked.'), backgroundColor: Colors.green),
               );
               _checkPurchaseStatus();
             }

@@ -81,7 +81,7 @@ class PaymentService {
           'currency': 'INR',
           'type': type,
           'itemId': itemId,
-          'receipt': '${type}_${itemId}_${DateTime.now().millisecondsSinceEpoch}',
+          'receipt': 'rcpt_${DateTime.now().millisecondsSinceEpoch}',
         },
       );
 
@@ -98,7 +98,7 @@ class PaymentService {
         'amount': (amount * 100).toInt(),
         'currency': 'INR',
         'name': 'Unani Academy',
-        'description': description,
+        'description': description.length > 255 ? description.substring(0, 255) : description,
         'order_id': orderId,
         'prefill': {
           'contact': '',
