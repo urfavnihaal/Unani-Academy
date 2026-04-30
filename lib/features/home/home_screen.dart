@@ -7,6 +7,7 @@ import '../auth/data/auth_repository.dart';
 import '../courses/data/course_repository.dart';
 import '../courses/data/course_model.dart';
 import '../main/nav_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Package deals data
 const _packages = [
@@ -400,19 +401,19 @@ class HomeScreen extends ConsumerWidget {
                 icon: FontAwesomeIcons.youtube,
                 label: 'YouTube',
                 iconColor: Colors.red,
-                onTap: () {}, // add your URL launcher here
+                onTap: () => _launchURL('https://youtube.com/@manjumanjhu27?si=zjmi5CtBHV6JTQdV'),
               ),
               _socialIconButton(
                 icon: FontAwesomeIcons.instagram,
                 label: 'Instagram',
                 iconColor: const Color(0xFFE1306C),
-                onTap: () {},
+                onTap: () => _launchURL('https://www.instagram.com/unani_academy?utm_source=qr&igsh=MWV6anh3YnQyZGpxZg=='),
               ),
               _socialIconButton(
                 icon: FontAwesomeIcons.telegram,
                 label: 'Telegram',
                 iconColor: const Color(0xFF26A5E4),
-                onTap: () {},
+                onTap: () => _launchURL('https://t.me/Unani_academy'),
               ),
             ],
           ),
@@ -520,5 +521,12 @@ class HomeScreen extends ConsumerWidget {
     
     // Default medical/study image
     return 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=400';
+  }
+
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      debugPrint('Could not launch $urlString');
+    }
   }
 }
