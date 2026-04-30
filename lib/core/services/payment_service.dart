@@ -10,8 +10,8 @@ class PaymentService {
   Function(String paymentId, String orderId)? _onExternalSuccess;
   Function(String message)? _onExternalError;
 
-  String? _currentCourseName;
-  double? _currentAmount;
+  String? _selectedCourseName;
+  int? _selectedCourseAmount;
 
   void init({
     Function(String paymentId, String orderId)? onSuccess,
@@ -32,8 +32,8 @@ class PaymentService {
     required String userEmail,
     required String userName,
   }) async {
-    _currentCourseName = subjectName;
-    _currentAmount = amount;
+    _selectedCourseName = subjectName;
+    _selectedCourseAmount = amount.toInt();
     await _createOrderAndPay(
       amount: amount,
       type: 'subject',
@@ -51,8 +51,8 @@ class PaymentService {
     required String userEmail,
     required String userName,
   }) async {
-    _currentCourseName = bundleName;
-    _currentAmount = amount;
+    _selectedCourseName = bundleName;
+    _selectedCourseAmount = amount.toInt();
     await _createOrderAndPay(
       amount: amount,
       type: 'bundle',
@@ -140,27 +140,42 @@ class PaymentService {
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
-    debugPrint('Razorpay Success: ${response.paymentId}');
-    
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        await Supabase.instance.client.from('purchases').insert({
-          'user_id': user.id,
-          'course_name': _currentCourseName ?? 'Unknown Course',
-          'amount': _currentAmount ?? 0,
-          'payment_id': response.paymentId ?? '',
-          'purchased_at': DateTime.now().toIso8601String(),
-          'valid_until': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
-          'status': 'active',
-        });
+      if (user == null) {
+        debugPrint('ERROR: No logged in user found');
+        return;
       }
-    } catch (e) {
-      debugPrint('Error saving purchase: $e');
-    }
 
-    // 1. Callback to UI (Repository will handle sync)
-    _onExternalSuccess?.call(response.paymentId ?? '', response.orderId ?? '');
+      debugPrint('Payment success: ${response.paymentId}');
+      debugPrint('Saving purchase for user: ${user.id}');
+      debugPrint('Course: $_selectedCourseName, Amount: $_selectedCourseAmount');
+
+      final insertData = {
+        'user_id': user.id,
+        'course_name': _selectedCourseName ?? 'Unknown',
+        'amount': _selectedCourseAmount ?? 0,
+        'payment_id': response.paymentId ?? 'N/A',
+        'purchased_at': DateTime.now().toIso8601String(),
+        'valid_until': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+        'status': 'active',
+      };
+
+      debugPrint('Inserting: $insertData');
+
+      final result = await Supabase.instance.client
+          .from('purchases')
+          .insert(insertData)
+          .select(); // .select() forces it to return data and throw on error
+
+      debugPrint('Insert result: $result');
+
+      // 1. Callback to UI (Repository will handle sync)
+      _onExternalSuccess?.call(response.paymentId ?? '', response.orderId ?? '');
+    } catch (e) {
+      debugPrint('PURCHASE SAVE ERROR: $e');
+      _onExternalError?.call('History save failed: $e');
+    }
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {

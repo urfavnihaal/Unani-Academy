@@ -17,39 +17,42 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchPurchases();
+    _loadPurchases();
   }
 
-  Future<void> _fetchPurchases() async {
+  Future<void> _loadPurchases() async {
     try {
+      setState(() => _isLoading = true);
+
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _error = 'User not logged in';
-          });
-        }
+        setState(() { _isLoading = false; _purchases = []; });
         return;
       }
 
-      final data = await Supabase.instance.client
+      debugPrint('Fetching purchases for user: ${user.id}');
+
+      final response = await Supabase.instance.client
           .from('purchases')
-          .select()
+          .select('*')
           .eq('user_id', user.id)
           .order('purchased_at', ascending: false);
 
+      debugPrint('Purchases fetched: $response');
+
       if (mounted) {
         setState(() {
-          _purchases = List<Map<String, dynamic>>.from(data);
+          _purchases = List<Map<String, dynamic>>.from(response);
           _isLoading = false;
         });
       }
     } catch (e) {
+      debugPrint('FETCH PURCHASES ERROR: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
           _isLoading = false;
+          _purchases = [];
+          _error = e.toString();
         });
       }
     }

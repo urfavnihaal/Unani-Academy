@@ -293,10 +293,10 @@ class _PremiumSubjectCardState extends State<_PremiumSubjectCard> with SingleTic
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Payment successful! $subjectName is now unlocked.'),
+                content: Text('Payment successful! $subjectName unlocked for 30 days.'),
                 backgroundColor: Colors.green,
                 behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 2),
+                duration: const Duration(seconds: 4),
               ),
             );
           }
