@@ -310,24 +310,8 @@ class CourseRepository {
   }) async {
     // 1. Save locally FIRST for instant unlock
     await _persistence.unlockSubject(subjectName);
-
-    // 2. Try to sync with Supabase in background
-    final user = _supabase.auth.currentUser;
-    if (user != null) {
-      try {
-        await _supabase.from('purchases').insert({
-          'user_id': user.id,
-          'course_id': courseId,
-          'payment_id': paymentId,
-          'amount': amount,
-          'type': 'course',
-          'display_name': subjectName,
-          'expires_at': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
-        });
-      } catch (e) {
-        debugPrint('[SYNC ERROR] $e');
-      }
-    }
+    
+    // Note: Supabase insert is now handled directly by PaymentService
   }
 
   Future<void> purchaseBundle({
@@ -340,24 +324,7 @@ class CourseRepository {
     // 1. Local unlock
     await _persistence.unlockAllInYear(yearMarker);
 
-    // 2. Supabase sync
-    final user = _supabase.auth.currentUser;
-    if (user != null) {
-      try {
-        await _supabase.from('purchases').insert({
-          'user_id': user.id,
-          'course_id': courseId,
-          'payment_id': paymentId,
-          'amount': amount,
-          'type': 'bundle',
-          'display_name': yearMarker, // e.g. "First Year Combo Package"
-          'bundle_course_names': subjects,
-          'expires_at': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
-        });
-      } catch (e) {
-        debugPrint('[BUNDLE SYNC ERROR] $e');
-      }
-    }
+    // Note: Supabase insert is now handled directly by PaymentService
   }
 
   Future<List<Map<String, dynamic>>> fetchPurchases() async {

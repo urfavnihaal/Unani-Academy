@@ -8,8 +8,7 @@ import 'data/course_repository.dart';
 import 'data/course_model.dart';
 import '../../core/services/payment_status_service.dart';
 import '../auth/data/auth_repository.dart';
-import '../../core/services/razorpay_service.dart';
-import '../../core/providers/supabase_provider.dart';
+import '../../core/providers/payment_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CoursesScreen extends ConsumerStatefulWidget {
@@ -271,9 +270,10 @@ class _PremiumSubjectCardState extends State<_PremiumSubjectCard> with SingleTic
 
   void _initiatePayment(WidgetRef ref, String subjectName) async {
     final profile = ref.read(userProfileProvider).value;
+    final paymentService = ref.read(paymentServiceProvider);
 
-      final razorpay = getRazorpayService();
-      razorpay.onSuccess = (paymentId, orderId) async {
+    paymentService.init(
+      onSuccess: (paymentId, orderId) async {
         setState(() => _isUpdating = true);
         try {
           await ref.read(courseRepositoryProvider).purchaseCourse(
@@ -283,7 +283,6 @@ class _PremiumSubjectCardState extends State<_PremiumSubjectCard> with SingleTic
             amount: widget.course.price.toInt(),
           );
 
-          // Save locally for instant access/offline
           await ref.read(paymentStatusServiceProvider).savePurchase(
             paymentId: paymentId,
             orderId: orderId,
@@ -308,57 +307,27 @@ class _PremiumSubjectCardState extends State<_PremiumSubjectCard> with SingleTic
         } finally {
           if (mounted) setState(() => _isUpdating = false);
         }
-      };
-
-      razorpay.onError = (message) {
+      },
+      onFailure: (message) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment failed: $message')));
         }
-      };
-
-      try {
-        // FIX 2: Create order via Edge Function instead of passing null
-        final supabase = ref.read(supabaseProvider);
-        final orderResponse = await supabase.functions.invoke(
-          'create-razorpay-order',
-          body: {
-            'amount': (widget.course.price * 100).toInt(),
-            'currency': 'INR',
-            'receipt': 'receipt_${DateTime.now().millisecondsSinceEpoch}',
-          },
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        );
-
-        final orderId = orderResponse.data?['id'] as String?;
-
-        // FIX 3: Null guard before opening Razorpay
-        if (orderId == null || orderId.isEmpty) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to create order. Please try again.'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
-          return;
-        }
-
-        await razorpay.openCheckout(
-          amountInPaise: (widget.course.price * 100).toInt(),
-          name: 'Unani Academy',
-          description: 'Unlock $subjectName',
-          email: profile?['email'] ?? '',
-          contact: profile?['phone'] ?? profile?['contact'] ?? '',
-          orderId: orderId,
-        );
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Checkout Error: $e')));
-        }
       }
+    );
+
+    try {
+      await paymentService.purchaseSubject(
+        subjectId: widget.course.id,
+        subjectName: subjectName,
+        amount: widget.course.price.toDouble(),
+        userEmail: profile?['email'] ?? '',
+        userName: profile?['phone'] ?? profile?['contact'] ?? '',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Checkout Error: $e')));
+      }
+    }
   }
 
   @override
