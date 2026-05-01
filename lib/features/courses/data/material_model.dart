@@ -2,6 +2,7 @@ class MaterialModel {
   final String id;
   final String year;
   final String subject;
+  final String? subjectId;  // New field
   final String fileName;    // Display name (sanitized)
   final String fileUrl;     // Public URL (legacy)
   final String storagePath; // Content path (PDF/Video)
@@ -15,6 +16,7 @@ class MaterialModel {
     required this.id,
     required this.year,
     required this.subject,
+    this.subjectId,
     required this.fileName,
     required this.fileUrl,
     required this.storagePath,
@@ -30,6 +32,7 @@ class MaterialModel {
       id:          json['id'] as String,
       year:        json['year'] as String? ?? 'Year 1',
       subject:     json['subject'] as String? ?? 'General',
+      subjectId:   json['subject_id'] as String?,
       fileName:    json['file_name'] as String? ?? '',
       fileUrl:     json['file_url'] as String? ?? '',
       storagePath: json['storage_path'] as String? ?? '',
@@ -48,6 +51,7 @@ class MaterialModel {
       'id':           id,
       'year':         year,
       'subject':      subject,
+      'subject_id':   subjectId,
       'file_name':    fileName,
       'file_url':     fileUrl,
       'storage_path': storagePath,
@@ -58,6 +62,7 @@ class MaterialModel {
       'created_at':   createdAt.toIso8601String(),
     };
   }
+
 
   /// Returns the most reliable public URL for the primary content.
   String get resolvedUrl {

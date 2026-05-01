@@ -118,9 +118,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           return SubjectMaterialsScreen(
             year: data['year'] ?? '',
             subject: data['subject'] ?? '',
+            subjectId: data['subject_id'], // Pass subjectId
           );
         },
       ),
+
       GoRoute(
         path: '/downloads',
         name: 'downloads',

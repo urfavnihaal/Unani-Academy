@@ -155,10 +155,15 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen>
                 orElse: () => false,
               );
 
-              final subjectToMatch = (course.subject ?? course.title).trim().toLowerCase();
+              final subjectIdToMatch = course.subjectId;
+              final subjectName = (course.subject ?? course.title);
+              
               final staticSubject = AppData.curriculum[year]?.firstWhere(
-                (s) => s.name.trim().toLowerCase() == subjectToMatch,
-                orElse: () => AppData.curriculum[year]!.first, // Default to the first subject of that year
+                (s) => s.id == subjectIdToMatch,
+                orElse: () => AppData.curriculum[year]!.firstWhere(
+                  (s) => s.name.toLowerCase() == subjectName.toLowerCase(),
+                  orElse: () => AppData.curriculum[year]!.first,
+                ),
               );
 
               return _PremiumSubjectCard(
@@ -244,7 +249,11 @@ class _PremiumSubjectCardState extends State<_PremiumSubjectCard> with SingleTic
           if (mounted) {
             context.push(
               '/subject_materials',
-              extra: {'year': widget.course.year, 'subject': subjectName},
+              extra: {
+                'year': widget.course.year, 
+                'subject': subjectName,
+                'subject_id': widget.course.subjectId, // Pass subject_id
+              },
             );
           }
           return;

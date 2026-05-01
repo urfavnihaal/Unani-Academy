@@ -83,6 +83,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
       final savedName = await ref.read(courseRepositoryProvider).uploadMedia(
             year: _selectedYear!,
             subject: _selectedSubject!.name,
+            subjectId: _selectedSubject!.id, // Pass subjectId
             mediaType: _mediaType,
             mainFileName: _cleanFileName!,
             mainFileBytes: _fileBytes!,

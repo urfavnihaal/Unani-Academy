@@ -12,11 +12,13 @@ import 'package:unani_academy/features/profile/data/downloads_repository.dart';
 class SubjectMaterialsScreen extends ConsumerStatefulWidget {
   final String year;
   final String subject;
+  final String? subjectId; // Added subjectId
 
   const SubjectMaterialsScreen({
     super.key,
     required this.year,
     required this.subject,
+    this.subjectId,
   });
 
   @override
@@ -45,11 +47,18 @@ class _SubjectMaterialsScreenState extends ConsumerState<SubjectMaterialsScreen>
       final repo = ref.read(courseRepositoryProvider);
       final all = await repo.fetchAllMaterials();
       
-      // Filter by specified year and subject (case-insensitive for safety)
-      final filtered = all.where((m) => 
-        m.year.toLowerCase().trim() == widget.year.toLowerCase().trim() && 
-        m.subject.toLowerCase().trim() == widget.subject.toLowerCase().trim()
-      ).toList();
+      // Filter by specified year and subject (or subjectId)
+      final filtered = all.where((m) {
+        final yearMatch = m.year.toLowerCase().trim() == widget.year.toLowerCase().trim();
+        
+        // Priority 1: Match by subjectId if available
+        if (widget.subjectId != null && m.subjectId != null) {
+          return yearMatch && m.subjectId == widget.subjectId;
+        }
+        
+        // Priority 2: Fallback to case-insensitive name matching
+        return yearMatch && m.subject.toLowerCase().trim() == widget.subject.toLowerCase().trim();
+      }).toList();
 
       if (mounted) {
         setState(() {
@@ -58,6 +67,7 @@ class _SubjectMaterialsScreenState extends ConsumerState<SubjectMaterialsScreen>
         });
       }
     } catch (e) {
+
       if (mounted) {
         setState(() {
           _error = 'Failed to load materials. Please check your connection.';

@@ -13,8 +13,8 @@ final courseRepositoryProvider = Provider<CourseRepository>((ref) {
 
 final materialsBySubjectProvider = FutureProvider.family<List<MaterialModel>, Map<String, String>>((ref, params) async {
   final year = params['year']!;
-  final subject = params['subject']!;
-  return ref.watch(courseRepositoryProvider).fetchMaterialsBySubject(year, subject);
+  final subjectId = params['subject_id']!; // Use subject_id
+  return ref.watch(courseRepositoryProvider).fetchMaterialsBySubject(year, subjectId);
 });
 
 final allMaterialsProvider = FutureProvider<List<MaterialModel>>((ref) async {
@@ -138,14 +138,14 @@ class CourseRepository {
 
   // ─── Materials ──────────────────────────────────────────────────────────────
 
-  Future<List<MaterialModel>> fetchMaterialsBySubject(String year, String subject) async {
+  Future<List<MaterialModel>> fetchMaterialsBySubject(String year, String subjectId) async {
     try {
-      debugPrint('[FETCH] Materials for year=$year, subject=$subject');
+      debugPrint('[FETCH] Materials for year=$year, subjectId=$subjectId');
       final response = await _supabase
           .from('materials')
           .select()
           .eq('year', year)
-          .eq('subject', subject)
+          .eq('subject_id', subjectId) // Use subject_id
           .order('created_at', ascending: false);
 
       if ((response as List).isEmpty) return [];
@@ -178,6 +178,7 @@ class CourseRepository {
   Future<String> uploadMedia({
     required String year,
     required String subject,
+    required String subjectId, // Added subjectId
     required String mediaType, // 'pdf' or 'video'
     required String mainFileName,
     required Uint8List mainFileBytes,
@@ -220,6 +221,7 @@ class CourseRepository {
       await _supabase.from('materials').insert({
         'year': year,
         'subject': subject,
+        'subject_id': subjectId, // Include subject_id
         'media_type': mediaType,
         'file_name': cleanMainName,
         'file_url': mainUrl,           // Always save the main URL here too
@@ -256,6 +258,7 @@ class CourseRepository {
   Future<void> uploadCourse({
     required String title,
     required String subject,
+    required String subjectId, // Added subjectId
     required int price,
     required String year,
     required String fileName,
@@ -274,6 +277,7 @@ class CourseRepository {
     await _supabase.from('courses').insert({
       'title': title,
       'subject': subject,
+      'subject_id': subjectId, // Include subject_id
       'year': year,
       'price': price,
       'file_url': fileUrl,
