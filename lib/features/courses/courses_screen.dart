@@ -150,8 +150,9 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen>
             itemCount: filteredCourses.length,
             itemBuilder: (context, index) {
               final course = filteredCourses[index];
+              final subjectNameForMatching = course.subject ?? course.title;
               final isUnlocked = unlockedAsync.maybeWhen(
-                data: (set) => set.contains(course.subject) || set.contains('ALL_$year'),
+                data: (set) => set.contains(subjectNameForMatching) || set.contains('ALL_$year'),
                 orElse: () => false,
               );
 
