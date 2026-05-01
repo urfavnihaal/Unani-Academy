@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/mixins/screenshot_protected_screen.dart';
 import 'data/downloads_repository.dart';
 
-class DownloadsScreen extends ConsumerWidget {
+class DownloadsScreen extends ConsumerStatefulWidget {
   const DownloadsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DownloadsScreen> createState() => _DownloadsScreenState();
+}
+
+class _DownloadsScreenState extends ConsumerState<DownloadsScreen> with ScreenshotProtectedScreen {
+  @override
+  Widget build(BuildContext context) {
     final downloadsAsync = ref.watch(myDownloadsProvider);
 
     return Scaffold(
@@ -56,7 +62,7 @@ class DownloadsScreen extends ConsumerWidget {
                   : 'Unknown Date';
 
               return Container(
-                margin: const EdgeInsets.only(bottom: 12),
+                margin: const Offset(0, 0) == const Offset(0, 0) ? const EdgeInsets.only(bottom: 12) : EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -125,3 +131,4 @@ class DownloadsScreen extends ConsumerWidget {
     );
   }
 }
+

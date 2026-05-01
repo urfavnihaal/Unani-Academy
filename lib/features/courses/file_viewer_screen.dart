@@ -11,6 +11,7 @@ import '../profile/data/downloads_repository.dart';
 
 // Mobile-only imports — guarded by kIsWeb checks at runtime
 import 'pdf_viewer_mobile.dart' if (dart.library.html) 'pdf_viewer_web.dart';
+import '../../core/mixins/screenshot_protected_screen.dart';
 
 class FileViewerScreen extends ConsumerStatefulWidget {
   final MaterialModel material;
@@ -20,7 +21,7 @@ class FileViewerScreen extends ConsumerStatefulWidget {
   ConsumerState<FileViewerScreen> createState() => _FileViewerScreenState();
 }
 
-class _FileViewerScreenState extends ConsumerState<FileViewerScreen> {
+class _FileViewerScreenState extends ConsumerState<FileViewerScreen> with ScreenshotProtectedScreen {
   late bool _isVideo;
   VideoPlayerController? _videoPlayerController;
   ChewieController? _chewieController;
